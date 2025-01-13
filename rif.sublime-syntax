@@ -1,0 +1,435 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: RIF Gen
+file_extensions:
+  - rif
+scope: source.rif
+contexts:
+  main:
+    # RIF Entry
+    - match: '^(rif)\s*(:)\s*(\w+)?'
+      captures:
+        1: storage.type.rif
+        2: keyword.operator.rif
+        3: entity.name.top.rif
+      push:
+        - meta_scope: meta.block.top.rif
+        - include: comments
+        - include: description
+        - match: '^(?!\s+)'
+          pop: true
+        - match: '^\s+(addrWidth|dataWidth|baseAddress)\s*(:)'
+          captures:
+            1 : keyword.language.rif
+            2 : keyword.operator.rif
+        - include: clk_reset
+        - include: parameters
+        - include: info
+        - include: numerics
+        - include: interface
+        - match: '^(\s+)(-)\s*(\w+)\s*(:)?'
+          captures:
+            2 : keyword.operator.rif
+            3 : entity.name.page.rif
+            4 : keyword.operator.rif
+          # Page Definition
+          push:
+            - meta_scope: meta.block.page.rif
+            - include: comments
+            - match: '^(?!\1\s+)'
+              pop: true
+            - include: strings
+            - match: '^\s+(baseAddress|addrWidth|clkEn|optional|include)\s*(:)?'
+              captures:
+                1 : keyword.language.rif
+                2 : keyword.operator.rif
+            - match: '^\s+(external)\b'
+              captures:
+                1 : keyword.language.rif
+            - include: numerics
+            - include: registers
+            - include: instances
+    # RIF Mux
+    - match: '^(rifmux)\s*(:)\s(\w+)?'
+      captures:
+        1: storage.type.rif
+        2: keyword.operator.rif
+        3: entity.name.top.rif
+      push:
+        - meta_scope: meta.block.rifmux.rif
+        - include: rifmux_map
+        - include: clk_reset
+        - include: parameters
+        - include: info
+        - include: comments
+        - include: description
+        - match: '^(?!\s+)'
+          pop: true
+        - include: interface
+        - match: '^\s+(addrWidth|dataWidth)\s*(:)'
+          captures:
+            1 : keyword.language.rif
+            2 : keyword.operator.rif
+        - include: numerics
+    - include: comments
+  # Register block
+  registers:
+    - match: '^(\s*)(registers)\s*(:)'
+      captures:
+        2: storage.type.rif
+        3: keyword.operator.rif
+      push:
+        - meta_scope: meta.block.registers.rif
+        - include: comments
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '^\s+(-)\s*(include)\b'
+          captures:
+            1: keyword.operator.rif
+            2: keyword.language.rif
+        - include: field
+        - include: numerics
+        - include: description
+        - include: strings
+  field:
+    - match: ^(\s*)(-)\s*(\w+)\s*(?:\[(\d+)\]\s*)?(:)\s*(?:(\(?)\s*(?:(\w+)(::))?(\w+)\s*(\))?)?
+      captures:
+        2 : keyword.operator.rif
+        3 : entity.name.register.rif
+        4 : constant.numeric.rif
+        5 : keyword.operator.rif
+        6 : punctuation.begin.rif
+        7 : entity.name.tag.rif
+        8 : keyword.operator.rif
+        9 : entity.name.tag.rif
+        10 : punctuation.end.rif
+      push:
+        - meta_scope: meta.block.field.rif
+        - include: comments
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '^\s*(wrPulse|rdPulse|accPulse)\b(?:\s*(comb|reg))?'
+          captures:
+            1 : keyword.language.rif
+            2 : constant.other.rif
+        - match: '^(\s*)(-)\s*(\w+)'
+          captures:
+            2 : keyword.operator.rif
+            3 : variable.other.field.rif
+        - match: '^\s+(hwclr|hwset|hwtgl|we|wel|signed|partial|arrayPartial|arrayPosIncr|external|externalDone|clear|disable|hidden|optional|reserved|toggle|lock)\b'
+          scope: keyword.language.rif
+        - match: '^\s+(clock|clkEn|hwReset)\s+(:)?'
+          captures:
+            1 : keyword.language.rif
+            2 : keyword.operator.rif
+        - match: '^\s*(hw)\s+(na|rw|ro|r|wo|w)\b'
+          captures:
+            1 : keyword.language.rif
+            2 : constant.other.rif
+        - match: \b(na|ro|rw|rclr|w0clr|w1clr|w1set|wclr|r|wo|w)\b
+          scope: constant.other.rif
+        - match: (=)
+          scope: keyword.operator.equal.rif
+        - match: (:)
+          scope: keyword.operator.other.rif
+        - match: '^\s+(pulse)\b(?:\s*(comb|reg))?'
+          captures:
+            1 : keyword.language.rif
+            2 : constant.other.rif
+        - match: '^\s+(counter)\b'
+          captures:
+            1 : keyword.language.rif
+          push:
+            - meta_scope: meta.counter.rif
+            - match: \b(up|down|updown|incrVal|decrVal|sat|event)\b
+              scope: constant.other.rif
+            - match: '($)'
+              pop: true
+        - match: '^\s+(limit)\b'
+          captures:
+            1 : keyword.language.rif
+          push:
+            - meta_scope: meta.limit.rif
+            - match: \b(enum)\b
+              scope: constant.other.rif
+            - include: numerics
+            - match: '($)'
+              pop: true
+        - include: info
+        - include: interrupt
+        - include: enum
+        - include: numerics
+        - include: description
+        - include: strings
+  interface:
+    - match: '^\s+(interface)\s*(:)\s*(?:(default_mask|default|APB|AHB|UAUX|apb|ahb|uaux)|(\w+))\b'
+      captures:
+        1 : keyword.language.rif
+        2 : keyword.operator.rif
+        3 : constant.other.rif
+  enum:
+    - match: '^(\s*)(enum)\s*(:)'
+      captures:
+        2: keyword.language.rif
+        3: keyword.operator.rif
+      push:
+        - meta_scope: meta.enum.rif
+        - match: \s*(-)\s*(\w+)\s*(=)\s*(\d[\w']*)\s+(".*?")
+          captures:
+            1: keyword.operator.rif
+            2: constant.other.rif
+            3: keyword.operator.rif
+            4: constant.numeric.rif
+            5: string.quoted.double.rif
+        - include: comments
+        - include: strings
+        - match: '(?=^)'
+          pop: true
+  info:
+    - match: '^(\s*)(info)\s*(:)?'
+      captures:
+        2: keyword.language.rif
+        3: keyword.operator.rif
+      push: info_item
+  info_item:
+    - meta_scope: meta.block.info.rif
+    - include: comments
+    - match: '^(?!\1\s+)'
+      pop: true
+    - match: '^(\s*)(-)\s*(\w+)\b\s*(:|=)?\s*(.*)'
+      captures:
+        2 : keyword.operator.rif
+        3 : variable.other.rif
+        4 : keyword.operator.rif
+        5 : string.rif
+  parameters:
+    - match: '^(\s*)(parameters)\s*(:)?'
+      captures:
+        2: keyword.language.rif
+        3: keyword.operator.rif
+      push:
+        - meta_scope: meta.block.info.rif
+        - include: comments
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '^(?i)(\s*)(-)\s*(\w+)\b\s*(=)\s*'
+          captures:
+            2 : keyword.operator.rif
+            3 : variable.other.rif
+            4 : keyword.operator.rif
+          push:
+            - match: '$'
+              pop: true
+            - include: comments
+            - include: numerics
+            - match: \b(not|ceil|floor|log2|log10|int|pow)\b
+              scope: keyword.operator.rif
+            - match: (\+|\-|\*|\/)
+              scope: keyword.operator.rif
+
+        # - match: '^(?i)(\s*)(-)\s*(\w+)\b\s*(=)\s*(?:(0x[0-9a-f]+|\d+)|(true|false)|(\w+))'
+        #   captures:
+        #     2 : keyword.operator.rif
+        #     3 : variable.other.rif
+        #     4 : keyword.operator.rif
+        #     5 : constant.numeric.rif
+        #     6 : constant.boolean.rif
+        #     7 : string.rif
+  interrupt:
+    - match: '^(\s*)(interrupt)\s*(:)?'
+      captures:
+        2: keyword.language.rif
+        3: keyword.operator.rif
+      push:
+        - meta_scope: meta.interrupt.rif
+        - match: \b(mask|enable|en|pending)\b
+          scope: support.function.field.rif
+        - match: \b(high|low|rising|falling|rclr|w0clr|w1clr|wclr)\b
+          scope: constant.other.rif
+        - match: (=)
+          scope: keyword.operator.rif
+        - include: numerics
+        - match: '($)'
+          pop: true
+  # Instance block
+  instances:
+    - match: '^(\s*)(instances)\s*(:)\s*(auto)?'
+      captures:
+        2: storage.type.rif
+        3: keyword.operator.rif
+        4: constant.other.rif
+      push:
+        - meta_scope: meta.block.instance.rif
+        - include: comments
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '^(\s*)(-)\s*(\w+)\s*(?:(=)\s*(\w+))?\s*(?:(\(?)\s*(\w+)\s*(\))?)?'
+          captures:
+            2 : keyword.operator.rif
+            3 : entity.name.register.rif
+            4 : keyword.operator.rif
+            5 : storage.type.rif
+            6 : punctuation.begin.groupname.rif
+            7 : entity.name.tag.rif
+            8 : punctuation.end.groupname.rif
+        - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(reset|hidden|reserved|disable|limit)\b'
+          captures:
+            2: constant.numeric.rif
+            3: keyword.operator.rif
+            4: variable.other.rif
+            6: constant.numeric.rif
+            7: keyword.operator.rif
+            8: keyword.language.rif
+        - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(info)\b'
+          captures:
+            2: constant.numeric.rif
+            3: keyword.operator.rif
+            4: variable.other.rif
+            6: constant.numeric.rif
+            7: keyword.operator.rif
+            8: keyword.language.rif
+          push: info_item
+        - match: '^\s*(hw)\s+(na|rw|ro|r|w)\b'
+          captures:
+            1 : keyword.language.rif
+            2 : constant.other.rif
+        - match: (@)
+          scope: keyword.operator.address.rif
+        - match: (=)
+          scope: keyword.operator.rif
+        - match: '^\s+(hidden|disable|reserved)\b'
+          captures:
+            1 : keyword.language.rif
+        - match: '^\s+(optional)\s*(:)?'
+          captures:
+            1 : keyword.language.rif
+            2 : keyword.operator.rif
+        - include: numerics
+        - include: description
+        - include: strings
+  # Rif Mux MAPPING
+  rifmux_map:
+    - match: '^(\s*)(map)\s*(:)?'
+      captures:
+        2: storage.type.rif
+        3: keyword.operator.rif
+      push:
+        - meta_scope: meta.block.map.rif
+        - include: comments
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '^(\s*)(-)\s*(\w+)\s*(?:(=)\s*(\w+))'
+          captures:
+            2 : keyword.operator.rif
+            3 : entity.name.register.rif
+            4 : keyword.operator.rif
+            5 : storage.type.rif
+        - match: '^(\s*)(-)\s*(\w+)\s+(external)\s+(\d+)\b'
+          captures:
+            2 : keyword.operator.rif
+            3 : entity.name.register.rif
+            4 : keyword.language.rif
+            5 : constant.numeric.rif
+        - match: (@)
+          scope: keyword.operator.address.rif
+        - include: numerics
+        - include: description
+        - include: parameters
+        - include: suffix
+        - include: group
+  # Common stuff
+  description:
+    - match: '^(\s*)(?:(?:(\w+)|(?:\[(\d+)\]))(\.))?(desc(?:ription)?)\b\s*(:)?'
+      captures:
+        2: variable.other.rif
+        3: constant.numeric.rif
+        4: keyword.operator.rif
+        5: keyword.language.rif
+        6: keyword.operator.rif
+      push:
+        - meta_scope: meta.description.rif
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '.*'
+          scope: string.unquoted.rif
+    - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(desc(?:ription)?)\b\s*(:)?'
+      captures:
+        2: constant.numeric.rif
+        3: keyword.operator.rif
+        4: variable.other.rif
+        6: constant.numeric.rif
+        7: keyword.operator.rif
+        8: keyword.language.rif
+        9: keyword.operator.rif
+      push:
+        - meta_scope: meta.description.rif
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '.*'
+          scope: string.unquoted.rif
+  strings:
+    - match: '"'
+      captures:
+        0: punctuation.definition.string.begin.rif
+      push:
+        - meta_scope: string.quoted.double.rif
+        - match: '"'
+          captures:
+            0: punctuation.definition.string.end.rif
+          pop: true
+  comments:
+    - match: \s*(//).*$\n?
+      scope: comment.line.rif
+    - match: '^\s*$'
+      scope: meta.empty-line.rif
+  numerics:
+    - match: '\b(?i)(\d+|0x[0-9a-f]+)\b'
+      scope: constant.numeric.rif
+    - match: '(\b\d+)?''(s?[bB]\s*[0-1xXzZ?][0-1_xXzZ?]*|s?[oO]\s*[0-7xXzZ?][0-7_xXzZ?]*|s?[dD]\s*[0-9xXzZ?][0-9_xXzZ?]*|s?[hH]\s*[0-9a-fA-FxXzZ?][0-9a-fA-F_xXzZ?]*)(?!''|\w)'
+      scope: constant.numeric.systemverilog.rif
+    - match: '\$\w+'
+      scope: constant.other.rif
+    - match: \b(?i)(true|false)\b
+      scope: constant.other.rif
+  clk_reset:
+    - match: '^\s*((?:hw|sw)(?:Reset|Clock|Clear))\s*(:)'
+      captures:
+        1 : keyword.language.rif
+        2 : keyword.operator.rif
+      push:
+        - match: '(?i)\b(((active)?(Low|High))|async|sync)\b'
+          scope: constant.other.rif
+        - match: $
+          pop: true
+    - match: '^\s+((?:hw|sw)ClkEn)\s*(:)\s*.*$'
+      captures:
+        1 : keyword.language.rif
+        2 : keyword.operator.rif
+  suffix:
+    - match: '^(\s*)(suffix)\s*(:)\s*(?:(\w+)(=))?\w+(?:(\()(alt)(\)))?'
+      captures:
+        2: keyword.language.rif
+        3: keyword.operator.rif
+        4: variable.other.rif
+        5: keyword.operator.rif
+        6: punctuation.begin.groupname.rif
+        7: constant.other.rif
+        8: punctuation.end.groupname.rif
+  group:
+    - match: '^(\s*)(group)\s*(:)\s*(\w+)\s*(@)\s*'
+      captures:
+        2: keyword.language.rif
+        3: keyword.operator.rif
+        4: entity.name.group.rif
+        5: keyword.operator.rif
+      push:
+        - meta_scope: meta.block.map.group.rif
+        - include: comments
+        - match: '$'
+          pop: true
+        - match: (@)
+          scope: keyword.operator.address.rif
+        - include: numerics
+        - include: strings
+
