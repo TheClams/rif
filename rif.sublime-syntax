@@ -121,7 +121,7 @@ contexts:
             3 : variable.other.field.rif
         - match: '^\s+(hwclr|hwset|hwtgl|we|wel|signed|partial|arrayPartial|arrayPosIncr|external|externalDone|clear|disable|hidden|optional|reserved|toggle)\b'
           scope: keyword.language.rif
-        - match: '^\s+(clock|clkEn)\s*(:)?'
+        - match: '^\s+(clock|clkEn|hwReset)\s*(:)?'
           captures:
             1 : keyword.language.rif
             2 : keyword.operator.rif
@@ -166,22 +166,10 @@ contexts:
             - include: numerics
             - match: '($)'
               pop: true
-        - match: '^\s+(password)\b'
-          captures:
-            1 : keyword.language.rif
-          push:
-            - meta_scope: meta.limit.rif
-            - match: \b(once|hold)\b
-              scope: support.function.field.rif
-            - match: \b(protect)\b
-              scope: constant.other.rif
-            - match: (=)
-              scope: keyword.operator.rif
-            - include: numerics
-            - match: '($)'
-              pop: true
         - include: info
         - include: interrupt
+        - include: interrupt_alt
+        - include: password
         - include: enum
         - include: numerics
         - include: description
@@ -199,16 +187,16 @@ contexts:
         3: keyword.operator.rif
       push:
         - meta_scope: meta.enum.rif
-        - match: \s*(-)\s*(\w+)\s*(=)\s*(\d[\w']*)\s+(:?(\()([\d\.e]+)(\))\s+)?(".*?")
+        - match: \s*(-)\s*(\w+)\s*(=)\s*(\d[\w']*)\s+(?:(\()([\d\.e]+)(\))\s+)?(".*?")
           captures:
             1: keyword.operator.rif
             2: constant.other.rif
             3: keyword.operator.rif
             4: constant.numeric.rif
-            6: punctuation.begin.rif
-            7: constant.numeric.rif
-            8: punctuation.end.rif
-            9: string.quoted.double.rif
+            5: punctuation.begin.rif
+            6: constant.numeric.rif
+            7: punctuation.end.rif
+            8: string.quoted.double.rif
         - include: comments
         - match: '(?=^)'
           pop: true
@@ -270,22 +258,37 @@ contexts:
         - include: numerics
         - match: '($)'
           pop: true
-    - match: '^(\s*)(alt)\b(?:\s+(\w+))?\s*(:)?'
+  interrupt_alt:
+    - match: '^(\s*)(alt)\s*(:)?\s*(\w+)'
       captures:
         2: keyword.language.rif
-        4: keyword.operator.rif
+        3: keyword.operator.rif
       push:
         - meta_scope: meta.interrupt.rif
         - match: \b(mask|enable|en|pending)\b
           scope: support.function.field.rif
-        - match: \b(high|low|rising|falling|rclr|w0clr|w1clr|wclr)\b
-          scope: constant.other.rif
         - match: (=)
           scope: keyword.operator.rif
         - include: numerics
         - include: strings
         - match: '($)'
           pop: true
+  password:
+    - match: '^(\s*)(password)\s*(:)?'
+      captures:
+        2: keyword.language.rif
+        3: keyword.operator.rif
+      push:
+        - match: \b(once|hold)\b
+          scope: support.function.field.rif
+        - match: \b(protect)\b
+          scope: constant.other.rif
+        - match: (=)
+          scope: keyword.operator.rif
+        - include: numerics
+        - match: '($)'
+          pop: true
+
   # Instance block
   instances:
     - match: '^(\s*)(instances)\s*(:)\s*(auto)?'
@@ -307,7 +310,7 @@ contexts:
             6 : punctuation.begin.groupname.rif
             7 : entity.name.tag.rif
             8 : punctuation.end.groupname.rif
-        - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(reset)\b'
+        - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(reset|hidden|reserved|disable|limit)\b'
           captures:
             2: constant.numeric.rif
             3: keyword.operator.rif
@@ -315,6 +318,15 @@ contexts:
             6: constant.numeric.rif
             7: keyword.operator.rif
             8: keyword.language.rif
+        - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(info)\b'
+          captures:
+            2: constant.numeric.rif
+            3: keyword.operator.rif
+            4: variable.other.rif
+            6: constant.numeric.rif
+            7: keyword.operator.rif
+            8: keyword.language.rif
+          push: info_item
         - match: '^\s*(hw)\s+(na|rw|ro|r|w)\b'
           captures:
             1 : keyword.language.rif
@@ -323,6 +335,9 @@ contexts:
           scope: keyword.operator.address.rif
         - match: (=)
           scope: keyword.operator.rif
+        - match: '^\s+(hidden|disable|reserved)\b'
+          captures:
+            1 : keyword.language.rif
         - match: '^\s+(optional)\s*(:)?'
           captures:
             1 : keyword.language.rif
@@ -411,6 +426,21 @@ contexts:
           pop: true
         - match: '.*'
           scope: string.unquoted.rif
+    # Alt interrupt description
+    - match: '^(\s*)(\w+)(\.)(\w+)(\.)(desc(?:ription)?)\b\s*(:)?'
+      captures:
+        2: variable.other.rif
+        3: keyword.operator.rif
+        4: variable.other.rif
+        5: keyword.operator.rif
+        6: keyword.language.rif
+        7: keyword.operator.rif
+      push:
+        - meta_scope: meta.description.rif
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '.*'
+          scope: string.unquoted.rif
   strings:
     - match: '"'
       captures:
@@ -436,7 +466,7 @@ contexts:
     - match: \b(?i)(true|false)\b
       scope: constant.other.rif
   clk_reset:
-    - match: '^\s*((?:hw|sw)(?:Reset|Clock))\s*(:)'
+    - match: '^\s*((?:hw|sw)(?:Reset|Clock|Clear))\s*(:)'
       captures:
         1 : keyword.language.rif
         2 : keyword.operator.rif
