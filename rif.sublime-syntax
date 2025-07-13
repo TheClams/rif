@@ -25,6 +25,7 @@ contexts:
             2 : keyword.operator.rif
         - include: clk_reset
         - include: parameters
+        - include: generics
         - include: info
         - include: numerics
         - include: interface
@@ -241,6 +242,33 @@ contexts:
               scope: keyword.operator.rif
             - match: (\+|\-|\*|\/)
               scope: keyword.operator.rif
+  generics:
+    - match: '^(\s*)(generics)\s*(:)?'
+      captures:
+        2: keyword.language.rif
+        3: keyword.operator.rif
+      push:
+        - meta_scope: meta.block.info.rif
+        - include: comments
+        - match: '^(?!\1\s+)'
+          pop: true
+        - match: '^(?i)(\s*)(-)\s*(?:\w+\.)*(\w+)\b\s*(=|:)\s*'
+          captures:
+            2 : keyword.operator.rif
+            3 : variable.other.rif
+            4 : keyword.operator.rif
+          push:
+            - match: '$'
+              pop: true
+            - match : (\d+)(:)(\d+)(:)(\d+)
+              captures:
+                1: constant.numeric.rif
+                2: keyword.operator.rif
+                3: constant.numeric.rif
+                4: keyword.operator.rif
+                5: constant.numeric.rif
+            - include: comments
+            - include: strings
 
   interrupt:
     - match: '^(\s*)(interrupt)\s*(:)?'
