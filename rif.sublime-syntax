@@ -176,7 +176,7 @@ contexts:
         - include: description
         - include: strings
   interface:
-    - match: '^\s+(interface)\s*(:)\s*(?:(default_mask|default|APB|AHB|UAUX|apb|ahb|uaux)|(\w+))\b'
+    - match: '^\s+(interface)\s*(:)\s*(?:(default_mask|default|APB|AHB|UAUX|AXI|apb|ahb|uaux|axi)|(\w+))\b'
       captures:
         1 : keyword.language.rif
         2 : keyword.operator.rif
@@ -260,13 +260,15 @@ contexts:
           push:
             - match: '$'
               pop: true
-            - match : (\d+)(:)(\d+)(:)(\d+)
+            - match : (\d+)(?:(:)(\d+)(?:(:)(\d+))?)?
               captures:
                 1: constant.numeric.rif
                 2: keyword.operator.rif
                 3: constant.numeric.rif
                 4: keyword.operator.rif
                 5: constant.numeric.rif
+            - match: \b(?i)(true|false)\b
+              scope: constant.other.rif
             - include: comments
             - include: strings
 
@@ -335,25 +337,33 @@ contexts:
             3 : entity.name.register.rif
             4 : keyword.operator.rif
             5 : storage.type.rif
-            6 : punctuation.begin.groupname.rif
+            6 : punctuation.accessor.begin.groupname.rif
             7 : entity.name.tag.rif
-            8 : punctuation.end.groupname.rif
-        - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(reset|hidden|reserved|disable|limit)\b'
+            8 : punctuation.accessor.end.groupname.rif
+        - match: '^(\s*)(\[)'
           captures:
-            2: constant.numeric.rif
-            3: keyword.operator.rif
-            4: variable.other.rif
-            6: constant.numeric.rif
-            7: keyword.operator.rif
-            8: keyword.language.rif
-        - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(info)\b'
+            2: punctuation.accessor.begin.rif
+          push:
+            - match: ']'
+              scope: punctuation.accessor.end.rif
+              pop: true
+            - match: ','
+              scope: punctuation.separator.rif
+            - match: ':'
+              scope: keyword.operator.rif
+            - include: numerics
+        - match: '(?:(?:^\s*)|(?:(\w+)(\.))|(\.))(reset|hidden|reserved|disable|limit)\b'
           captures:
-            2: constant.numeric.rif
+            1: variable.other.rif
+            2: keyword.operator.rif
             3: keyword.operator.rif
-            4: variable.other.rif
-            6: constant.numeric.rif
-            7: keyword.operator.rif
-            8: keyword.language.rif
+            4: keyword.language.rif
+        - match: '(?:(?:^\s*)|(?:(\w+)(\.))|(\.))(info)\b'
+          captures:
+            1: variable.other.rif
+            2: keyword.operator.rif
+            3: keyword.operator.rif
+            4: keyword.language.rif
           push: info_item
         - match: '^\s*(hw)\s+(na|rw|ro|r|w)\b'
           captures:
@@ -434,11 +444,10 @@ contexts:
         8: keyword.language.rif
         9: keyword.operator.rif
       push:
-        - meta_scope: meta.description.rif
+        - meta_scope: meta.description.rif string.unquoted.rif
         - match: '^(?!\1\s+)'
           pop: true
-        - match: '.*'
-          scope: string.unquoted.rif
+        - include: string-placeholder
     - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(desc(?:ription)?)\b\s*(:)?'
       captures:
         2: constant.numeric.rif
@@ -449,11 +458,10 @@ contexts:
         8: keyword.language.rif
         9: keyword.operator.rif
       push:
-        - meta_scope: meta.description.rif
+        - meta_scope: meta.description.rif string.unquoted.rif
         - match: '^(?!\1\s+)'
           pop: true
-        - match: '.*'
-          scope: string.unquoted.rif
+        - include: string-placeholder
     # Alt interrupt description
     - match: '^(\s*)(\w+)(\.)(\w+)(\.)(desc(?:ription)?)\b\s*(:)?'
       captures:
@@ -464,11 +472,11 @@ contexts:
         6: keyword.language.rif
         7: keyword.operator.rif
       push:
-        - meta_scope: meta.description.rif
+        - meta_scope: meta.description.rif string.unquoted.rif
         - match: '^(?!\1\s+)'
           pop: true
-        - match: '.*'
-          scope: string.unquoted.rif
+        - include: string-placeholder
+
   strings:
     - match: '"'
       captures:
@@ -479,6 +487,13 @@ contexts:
           captures:
             0: punctuation.definition.string.end.rif
           pop: true
+        - include: string-placeholder
+  string-placeholder:
+    - match: \$[if]
+      scope: constant.other.placeholder.systemverilog
+
+  # string-unquoted:
+
   comments:
     - match: \s*(//|#).*$\n?
       scope: comment.line.rif
