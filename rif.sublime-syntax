@@ -448,12 +448,13 @@ contexts:
         - match: '^(?!\1\s+)'
           pop: true
         - include: string-placeholder
-    - match: '^(\s*)(?:\[(\d+)\](\.))?(\w+)(\[(\d+)\])?(\.)(desc(?:ription)?)\b\s*(:)?'
+    - match: '(\.)(?:(\w+)((\[)(\d+)(\]))?(\.))?(desc(?:ription)?)\b\s*(:)?'
       captures:
-        2: constant.numeric.rif
-        3: keyword.operator.rif
-        4: variable.other.rif
-        6: constant.numeric.rif
+        1: keyword.operator.rif
+        2: variable.other.rif
+        4: punctuation.accessor.begin.rif
+        5: constant.numeric.rif
+        6: punctuation.accessor.end.rif
         7: keyword.operator.rif
         8: keyword.language.rif
         9: keyword.operator.rif
