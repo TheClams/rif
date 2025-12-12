@@ -367,8 +367,8 @@ contexts:
           push: info_item
         - match: '^\s*(hw)\s+(na|rw|ro|r|w)\b'
           captures:
-            1 : keyword.language.rif
-            2 : constant.other.rif
+            1: keyword.language.rif
+            2: constant.other.rif
         - match: (@)
           scope: keyword.operator.address.rif
         - match: (=)
@@ -376,10 +376,15 @@ contexts:
         - match: '^\s+(hidden|disable|reserved)\b'
           captures:
             1 : keyword.language.rif
-        - match: '^\s+(optional)\s*(:)?'
+        - match: '^\s+(optional_acc)\b\s*(:)?\s*(na|rw|ro|r|wo|w)'
           captures:
-            1 : keyword.language.rif
-            2 : keyword.operator.rif
+            1: keyword.language.rif
+            2: keyword.operator.rif
+            3: constant.other.rif
+        - match: '^\s+(optional)\b\s*(:)?'
+          captures:
+            1: keyword.language.rif
+            2: keyword.operator.rif
         - include: numerics
         - include: description
         - include: strings
