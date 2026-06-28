@@ -130,7 +130,7 @@ contexts:
           captures:
             1 : keyword.language.rif
             2 : constant.other.rif
-        - match: \b(na|ro|rw|rclr|w0clr|w1clr|w1set|wclr|r|wo|w)\b
+        - match: \b(na|ro|rw|rclr|w0clr|w1clr|w1set|wclr|r|wo|w|pulse)\b
           scope: constant.other.rif
         - match: (=)
           scope: keyword.operator.equal.rif
@@ -162,7 +162,7 @@ contexts:
             1 : keyword.language.rif
           push:
             - meta_scope: meta.limit.rif
-            - match: \b(enum)\b
+            - match: \b(enum|external)\b
               scope: constant.other.rif
             - include: numerics
             - match: '($)'
@@ -182,10 +182,11 @@ contexts:
         2 : keyword.operator.rif
         3 : constant.other.rif
   enum:
-    - match: '^(\s*)(enum)\s*(:)'
+    - match: '^(\s*)(enum)\s*(:)\s*(type)?'
       captures:
         2: keyword.language.rif
         3: keyword.operator.rif
+        4: constant.other.rif
       push:
         - meta_scope: meta.enum.rif
         - match: \s*(-)\s*(\w+)\s*(=)\s*(\d[\w']*)\s+(?:(\()([\d\.e]+)(\))\s+)?(".*?")
@@ -369,7 +370,7 @@ contexts:
           captures:
             1: keyword.language.rif
             2: constant.other.rif
-        - match: (@)
+        - match: '(@\+=|@)'
           scope: keyword.operator.address.rif
         - match: (=)
           scope: keyword.operator.rif
@@ -411,8 +412,13 @@ contexts:
             3 : entity.name.register.rif
             4 : keyword.language.rif
             5 : constant.numeric.rif
-        - match: (@)
+        - match: '(@\+=|@)'
           scope: keyword.operator.address.rif
+        - match: '^\s+(optional)\b\s*(:)?\s*(enable)?'
+          captures:
+            1: keyword.language.rif
+            2: keyword.operator.rif
+            3 : constant.other.rif
         - include: group
         - include: suffix
         - include: numerics
