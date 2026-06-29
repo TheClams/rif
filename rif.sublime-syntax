@@ -140,7 +140,7 @@ contexts:
           captures:
             1 : keyword.language.rif
             2 : constant.other.rif
-        - match: '^\s+(nb_frac)\s*([:=])\s*(\d+)'
+        - match: '^\s+(nb_frac)\s*([:=])\s*(-?\d+)'
           captures:
             1 : keyword.language.rif
             2 : keyword.operator.rif
